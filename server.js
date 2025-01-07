@@ -1,41 +1,50 @@
 const express = require('express');
-const fileUpload = require('express-fileupload');
+const axios = require('axios');
 const fs = require('fs');
+const path = require('path');
 const ffmpeg = require('fluent-ffmpeg');
-
 const app = express();
-app.use(fileUpload());
+const port = process.env.PORT || 3000;
 
-app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
-});
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-app.post('/upload', (req, res) => {
-    if (!req.files || Object.keys(req.files).length === 0) {
-        return res.status(400).send('No files were uploaded.');
-    }
-
-    let mp4File = req.files.mp4File;
-    let uploadPath = __dirname + '/' + mp4File.name;
-
-    // Save the file to the server
-    mp4File.mv(uploadPath, function(err) {
-        if (err) return res.status(500).send(err);
-
-        // Use ffmpeg to get video info
-        ffmpeg.ffprobe(uploadPath, function(err, metadata) {
-            if (err) return res.status(500).send(err);
-            
-            let duration = metadata.format.duration;
-            res.json({ duration: duration });
-
-            // Clean up the file after processing
-            fs.unlinkSync(uploadPath);
+app.post('/upload', async (req, res) => {
+    const videoUrl = req.body.url;
+    try {
+        // Download the video file
+        const response = await axios({
+            method: 'get',
+            url: videoUrl,
+            responseType: 'stream'
         });
-    });
+        const videoPath = path.join(__dirname, 'video.mp4');
+        const writer = fs.createWriteStream(videoPath);
+        response.data.pipe(writer);
+
+        await new Promise((resolve, reject) => {
+            writer.on('finish', resolve);
+            writer.on('error', reject);
+        });
+
+        // Get video info using ffmpeg
+        ffmpeg.ffprobe(videoPath, (err, metadata) => {
+            if (err) {
+                return res.status(500).json({ error: 'Failed to get video info' });
+            }
+            const duration = metadata.format.duration;
+            res.json({ url: videoUrl, duration: duration });
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to download video' });
+    } finally {
+        // Clean up the downloaded file
+        if (fs.existsSync(videoPath)) {
+            fs.unlinkSync(videoPath);
+        }
+    }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
 });
