@@ -2,13 +2,31 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Upload MP4 File</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Info</title>
 </head>
 <body>
-    <h1>Upload MP4 File</h1>
-    <form action="/upload" method="post" enctype="multipart/form-data">
-        <input type="file" name="mp4File" accept="video/mp4">
-        <button type="submit">Upload</button>
+    <h1>Upload MP4 URL</h1>
+    <form id="uploadForm">
+        <input type="text" id="videoUrl" placeholder="Enter MP4 URL" required>
+        <button type="submit">Submit</button>
     </form>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const videoUrl = document.getElementById('videoUrl').value;
+            const response = await fetch('/upload', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ url: videoUrl })
+            });
+            const result = await response.json();
+            document.getElementById('result').innerText = JSON.stringify(result, null, 2);
+        });
+    </script>
 </body>
 </html>
