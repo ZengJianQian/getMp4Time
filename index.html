@@ -25,5 +25,8 @@
             headers: { 'X-Video-Duration': duration },
             body: { duration, formattedDuration: tim }
         };
+        document.getElementById('responseHeader').textContent = 
+            `模拟响应头数据：${JSON.stringify(mockResponse, null, 2)}`;
+    });
     });
 </script>
