@@ -1,34 +1,24 @@
 <!DOCTYPE html>
+<!-- 通过URL参数传递视频地址 -->
 <script>
     const urlParams = new URLSearchParams(window.location.search);
-    const videoUrl = urlParams.get('videoUrl');  // 获取如 ?videoUrl=https://cdn2.gzsg.org/upload/tinymce/1744618564375.mp4
+    const videoUrl = urlParams.get('videoUrl'); // 获取如 ?videoUrl=https://cdn2.gzsg.org/upload/tinymce/1744618564375.mp4
 </script>
-<video id="myVideo" controls crossorigin="anonymous"></video>
+<video id="myVideo" controls></video>
 <p id="durationDisplay">视频加载中...</p>
 
 <script>
     const video = document.getElementById('myVideo');
-    video.src = videoUrl;
+    video.src = videoUrl; // 设置视频源
+video.addEventListener('loadedmetadata', function() {
+    const duration = video.duration;
+    const tim = formatDuration(duration);
+    document.getElementById('durationDisplay').textContent = 
+        `视频时长：${tim}, 总秒数：${duration}秒`;
 
-    video.addEventListener('loadedmetadata', async function () {
-        const duration = video.duration;
-        const hours = Math.floor(duration / 3600);
-        const minutes = Math.floor((duration % 3600) / 60);
-        const secs = Math.floor(duration % 60);
-        const pad = (num) => num.toString().padStart(2, '0');
-        const tim = `${pad(hours)}:${pad(minutes)}:${pad(secs)}`;
-        document.getElementById('durationDisplay').textContent = 
-            `视频时长：${tim}, 总秒数：${duration}秒`;
-
-        // 发送时长到服务端，服务端通过响应头返回
-        const response = await fetch('http://localhost:3000/get-duration', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ duration, videoUrl })
-        });
-        
-        // 从响应头读取服务端返回的时长
-        const durationHeader = response.headers.get('X-Video-Duration');
-        console.log('响应头中的时长:', durationHeader);
-    });
+    // 将时长存入URL或本地存储
+    const newUrl = `${window.location.href}&duration=${duration}`;
+    window.history.replaceState(null, '', newUrl); // 更新URL参数
+    localStorage.setItem('videoDuration', duration); // 存入本地存储
+});
 </script>
