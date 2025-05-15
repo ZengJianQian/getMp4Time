@@ -1,32 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Info</title>
-</head>
-<body>
-    <h1>Upload MP4 URL</h1>
-    <form id="uploadForm">
-        <input type="text" id="videoUrl" placeholder="Enter MP4 URL" required>
-        <button type="submit">Submit</button>
-    </form>
-    <div id="result"></div>
+<!-- 通过URL参数传递视频地址 -->
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const videoUrl = urlParams.get('videoUrl'); // 获取如 ?videoUrl=https://cdn2.gzsg.org/upload/tinymce/1744618564375.mp4
+</script>
+<video id="myVideo" controls></video>
+<p id="durationDisplay">视频加载中...</p>
 
-    <script>
-        document.getElementById('uploadForm').addEventListener('submit', async function(event) {
-            event.preventDefault();
-            const videoUrl = document.getElementById('videoUrl').value;
-            const response = await fetch('/upload', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ url: videoUrl })
-            });
-            const result = await response.json();
-            document.getElementById('result').innerText = JSON.stringify(result, null, 2);
-        });
-    </script>
-</body>
-</html>
+<script>
+    const video = document.getElementById('myVideo');
+    video.src = videoUrl; // 设置视频源
+
+    video.addEventListener('loadedmetadata', function () {
+        const duration = video.duration; // 获取时长（秒）
+        const hours = Math.floor(duration / 3600);
+        const minutes = Math.floor((duration % 3600) / 60);
+        const secs = Math.floor(duration % 60);// 补零操作（确保两位数）
+        const pad = (num) => num.toString().padStart(2, '0'); //补零
+        const tim = `${hours}:${pad(minutes)}:${pad(secs)}`;
+        document.getElementById('durationDisplay').textContent =
+            `视频时长：${tim},总秒数：${duration}秒`;
+    });
+</script>
