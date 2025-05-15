@@ -20,5 +20,10 @@
         const tim = `${hours}:${pad(minutes)}:${pad(secs)}`;
         document.getElementById('durationDisplay').textContent =
             `视频时长：${tim},总秒数：${duration}秒`;
+        // 模拟响应头（通过JSON展示）
+        const mockResponse = {
+            headers: { 'X-Video-Duration': duration },
+            body: { duration, formattedDuration: tim }
+        };
     });
 </script>
