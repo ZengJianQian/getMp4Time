@@ -17,8 +17,8 @@ video.addEventListener('loadedmetadata', function() {
         `视频时长：${tim}, 总秒数：${duration}秒`;
 
     // 将时长存入URL或本地存储
-    const newUrl = `${window.location.href}&duration=${duration}`;
-    window.history.replaceState(null, '', newUrl); // 更新URL参数
-    localStorage.setItem('videoDuration', duration); // 存入本地存储
+   // const newUrl = `${window.location.href}&duration=${duration}`;
+  //  window.history.replaceState(null, '', newUrl); // 更新URL参数
+   // localStorage.setItem('videoDuration', duration); // 存入本地存储
 });
 </script>
