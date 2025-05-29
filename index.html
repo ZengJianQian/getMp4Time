@@ -20,7 +20,7 @@
 <script>
     // 配置项 - 替换为你的Webhook地址和可选密钥
     const WEBHOOK_URL = 'https://open.feishu.cn/anycross/trigger/callback/MDM3YmNiMDY3ZGYxYzFlZmYyNmRkN2Q4Njk2MzRmYWRi'; // 你的Webhook接收地址
-    const SECRET_TOKEN = 'xiwaigaoer'; // 可选：用于验证请求
+    //const SECRET_TOKEN = 'xiwaigaoer'; // 可选：用于验证请求
 
     // 从URL参数获取视频地址
     const urlParams = new URLSearchParams(window.location.search);
@@ -53,7 +53,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${SECRET_TOKEN}` // 可选认证
+                  //  'Authorization': `Bearer ${SECRET_TOKEN}` // 可选认证
                 },
                 body: JSON.stringify(payload)
             });
