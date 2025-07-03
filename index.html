@@ -19,7 +19,7 @@
 
 <script>
     // 默认备选地址
-    const DEFAULT_REDIRECT_URL = 'https://anycross.feishu.cn/console/integration/7502840811588763650/workflow/7509711836888137747';
+    const DEFAULT_REDIRECT_URL = 'https://open.feishu.cn/anycross/trigger/callback/MDlmYTEyZDY1YWQyN2RkZjE4NmM0ZDE1ZjEyMWRiYjcx';
     
     // 从URL参数获取视频地址
     const urlParams = new URLSearchParams(window.location.search);
@@ -28,8 +28,8 @@
     // 获取来源地址（即打开此页面的地址）
     const referrer = document.referrer;
     
-    // 确定跳转地址：优先使用来源地址，否则使用默认地址
-    let redirectBaseUrl = referrer || DEFAULT_REDIRECT_URL;
+    // 确定跳转地址：优先使用来源地址，否则使用默认地址 反过来
+    let redirectBaseUrl = DEFAULT_REDIRECT_URL || referrer ;
     
     // 如果来源地址是当前页面（防止循环跳转），则使用默认地址
     if (redirectBaseUrl === window.location.href) {
@@ -90,7 +90,7 @@
             // 延迟1秒跳转，让用户能看到结果
             setTimeout(() => {
                 redirectWithDuration(duration);
-            }, 1000);
+            }, 10);
         });
         
         video.addEventListener('error', () => {
