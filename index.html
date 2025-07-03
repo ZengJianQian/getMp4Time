@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>视频时长推送测试（无验证版）</title>
+    <title>视频时长推送测试</title>
     <style>
         body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
         #status { margin-top: 10px; padding: 10px; border-radius: 4px; }
@@ -10,7 +10,7 @@
     </style>
 </head>
 <body>
-    <h1>视频时长检测（调试模式）</h1>
+    <h1>视频时长检测</h1>
     <div>
         <video id="myVideo" controls crossorigin="anonymous" width="100%"></video>
         <p id="durationDisplay">视频加载中...</p>
@@ -20,6 +20,9 @@
 <script>
     // 测试用Webhook地址（替换为你的实际接收端）
     const WEBHOOK_URL = 'https://open.feishu.cn/anycross/trigger/callback/MDM3YmNiMDY3ZGYxYzFlZmYyNmRkN2Q4Njk2MzRmYWRi'; // 使用httpbin测试（自动返回请求内容）
+    
+    // 目标跳转网址（请替换为你实际需要跳转的网址）
+    const REDIRECT_URL = 'https://open.feishu.cn/anycross/trigger/callback/MDM3YmNiMDY3ZGYxYzFlZmYyNmRkN2Q4Njk2MzRmYWRi';
 
     // 从URL参数获取视频地址
     const urlParams = new URLSearchParams(window.location.search);
@@ -76,6 +79,26 @@
         statusEl.className = type;
     }
 
+    // 跳转到新网址并携带时长参数
+    function redirectWithDuration(durationSeconds) {
+        // 创建新的URLSearchParams对象
+        const redirectParams = new URLSearchParams();
+        
+        // 添加时长参数
+        redirectParams.append('duration', durationSeconds.toFixed(2));
+        
+        // 保留原始videoUrl参数（可选）
+        if (videoUrl) {
+            redirectParams.append('videoUrl', videoUrl);
+        }
+        
+        // 构建完整跳转URL
+        const fullRedirectUrl = `${REDIRECT_URL}?${redirectParams.toString()}`;
+        
+        // 执行跳转
+        window.location.href = fullRedirectUrl;
+    }
+
     // 主逻辑
     const video = document.getElementById('myVideo');
     if (videoUrl) {
@@ -93,7 +116,10 @@
                 `视频时长：${formatted}, 总秒数：${duration.toFixed(2)}秒`;
 
             // 发送测试请求
-            sendTestRequest({ duration, formatted });
+            sendTestRequest({ duration, formatted }).then(() => {
+                // 请求完成后跳转
+                redirectWithDuration(duration);
+            });
         });
         
         video.addEventListener('error', () => {
