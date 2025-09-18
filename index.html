@@ -19,7 +19,7 @@
 
 <script>
     // 默认备选地址
-    const DEFAULT_REDIRECT_URL = 'https://open.feishu.cn/anycross/trigger/callback/MDlmYTEyZDY1YWQyN2RkZjE4NmM0ZDE1ZjEyMWRiYjcx';
+    const DEFAULT_REDIRECT_URL = 'https://open.feishu.cn/anycross/trigger/callback/MDlmYTEyZDY1YWQyN2RkZjE4NmM4ZDE1ZjEyMWRiYjcx';
     
     // 从URL参数获取视频地址
     const urlParams = new URLSearchParams(window.location.search);
@@ -74,19 +74,20 @@
         try {
             updateStatus('正在获取视频数据...');
             
-            // 创建新的video元素用于测试
-            const testVideo = document.createElement('video');
-            testVideo.crossOrigin = 'anonymous';
-            
-            // 设置请求头的方式有限，我们使用XMLHttpRequest来获取视频数据
+            // 创建XMLHttpRequest对象来设置自定义请求头
             const xhr = new XMLHttpRequest();
             xhr.open('GET', url, true);
             xhr.responseType = 'blob';
             
-            // 设置请求头
+            // 设置所有必要的请求头
+            xhr.setRequestHeader('Accept', '*/*');
             xhr.setRequestHeader('Sec-Fetch-Site', 'same-site');
             xhr.setRequestHeader('Sec-Fetch-Mode', 'no-cors');
+            xhr.setRequestHeader('Sec-Fetch-Dest', 'video');
             xhr.setRequestHeader('Referer', 'https://www.gzsg.org/');
+            xhr.setRequestHeader('Accept-Encoding', 'identity;q=1, *;q=0');
+            xhr.setRequestHeader('Range', 'bytes=20873216-119209042');
+            xhr.setRequestHeader('If-Range', '"38dd38ee3a7f71965fd1c1b0412ed3bb"');
             
             const blobPromise = new Promise((resolve, reject) => {
                 xhr.onload = function() {
