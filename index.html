@@ -70,36 +70,45 @@
     }
 
     // 使用自定义请求头加载视频
-    async function loadVideoWithHeaders(url, attempt = 1) {
+    async function loadVideoWithHeaders(url) {
         try {
-            updateStatus(`正在获取视频数据 (尝试 ${attempt}/3)...`);
+            updateStatus('正在获取视频数据...');
             
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'Referer': 'https://www.gzsg.org/',
-                    'Accept': '*/*',
-                    'Sec-Fetch-Dest': 'video',
-                    'Sec-Fetch-Site': 'same-site',
-                    'Accept-Encoding': 'identity;q=1, *;q=0',
-                    'Range': 'bytes=20873216-119209042',
-                    'If-Range': '"38dd38ee3a7f71965fd1c1b0412ed3bb"'
-                }
+            // 创建新的video元素用于测试
+            const testVideo = document.createElement('video');
+            testVideo.crossOrigin = 'anonymous';
+            
+            // 设置请求头的方式有限，我们使用XMLHttpRequest来获取视频数据
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.responseType = 'blob';
+            
+            // 设置请求头
+            xhr.setRequestHeader('Sec-Fetch-Site', 'same-site');
+            xhr.setRequestHeader('Sec-Fetch-Mode', 'no-cors');
+            xhr.setRequestHeader('Referer', 'https://www.gzsg.org/');
+            
+            const blobPromise = new Promise((resolve, reject) => {
+                xhr.onload = function() {
+                    if (xhr.status === 200 || xhr.status === 206) {
+                        resolve(xhr.response);
+                    } else {
+                        reject(new Error(`HTTP error! status: ${xhr.status}`));
+                    }
+                };
+                xhr.onerror = function() {
+                    reject(new Error('Network error'));
+                };
             });
             
-            if (!response.ok && response.status !== 206) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            xhr.send();
             
-            const blob = await response.blob();
+            const blob = await blobPromise;
             const blobUrl = URL.createObjectURL(blob);
             
             return blobUrl;
         } catch (error) {
-            console.error(`加载视频失败 (尝试 ${attempt}):`, error);
-            if (attempt < 3) {
-                return loadVideoWithHeaders(url, attempt + 1);
-            }
+            console.error('加载视频失败:', error);
             updateStatus(`视频加载失败: ${error.message}`, 'error');
             return null;
         }
@@ -110,59 +119,39 @@
     if (videoUrl) {
         updateStatus('正在加载视频...');
         
-        // 尝试加载视频的函数
-        async function tryLoadVideo(attempt = 1) {
-            if (attempt > 3) {
-                updateStatus('所有尝试均失败，请检查视频URL', 'error');
-                return;
-            }
-            
-            updateStatus(`尝试加载视频 (方法 ${attempt})...`);
-            
+        // 尝试两种方式加载视频
+        async function tryLoadVideo() {
+            // 先尝试直接加载
             try {
-                if (attempt === 1) {
-                    // 方法1: 直接加载
-                    video.src = videoUrl;
-                    
-                    // 设置超时检测
-                    const timeout = setTimeout(() => {
-                        updateStatus('方法1超时，尝试方法2...');
-                        tryLoadVideo(2);
-                    }, 5000);
-                    
-                    // 如果加载成功，清除超时
-                    video.addEventListener('loadedmetadata', () => {
-                        clearTimeout(timeout);
-                    }, { once: true });
-                    
-                    video.addEventListener('error', () => {
-                        clearTimeout(timeout);
-                        updateStatus('方法1失败，尝试方法2...');
-                        tryLoadVideo(2);
-                    }, { once: true });
-                } else {
-                    // 方法2: 使用Fetch API加载
-                    const blobUrl = await loadVideoWithHeaders(videoUrl);
+                video.src = videoUrl;
+                
+                // 设置超时检测
+                const timeout = setTimeout(() => {
+                    updateStatus('直接加载超时，尝试使用自定义请求头...');
+                    loadVideoWithHeaders(videoUrl).then(blobUrl => {
+                        if (blobUrl) {
+                            video.src = blobUrl;
+                        }
+                    });
+                }, 3000);
+                
+                // 如果直接加载成功，清除超时
+                video.addEventListener('loadedmetadata', () => {
+                    clearTimeout(timeout);
+                }, { once: true });
+                
+            } catch (e) {
+                console.log('直接加载失败，尝试自定义请求头:', e);
+                loadVideoWithHeaders(videoUrl).then(blobUrl => {
                     if (blobUrl) {
                         video.src = blobUrl;
-                    } else {
-                        updateStatus('所有尝试均失败，请检查视频URL', 'error');
                     }
-                }
-            } catch (error) {
-                console.error('加载视频失败:', error);
-                if (attempt < 3) {
-                    tryLoadVideo(attempt + 1);
-                } else {
-                    updateStatus('所有尝试均失败，请检查视频URL', 'error');
-                }
+                });
             }
         }
         
-        // 开始加载视频
         tryLoadVideo();
         
-        // 成功加载元数据时的处理
         video.addEventListener('loadedmetadata', function() {
             const duration = video.duration;
             if (isNaN(duration)) {
@@ -182,6 +171,14 @@
             }, 1000);
         }, { once: true });
         
+        video.addEventListener('error', () => {
+            updateStatus('视频播放失败，尝试备用方法...', 'error');
+            loadVideoWithHeaders(videoUrl).then(blobUrl => {
+                if (blobUrl) {
+                    video.src = blobUrl;
+                }
+            });
+        }, { once: true });
     } else {
         updateStatus('未提供视频URL参数（使用?videoUrl=xxx）', 'error');
     }
