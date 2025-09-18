@@ -55,8 +55,42 @@
         statusEl.className = type;
     }
 
-    // 跳转并携带时长参数
+    // 修改后的跳转函数
     function redirectWithDuration(durationSeconds) {
+        // 创建跳转URL对象
+        const redirectUrl = new URL(redirectBaseUrl);
+        
+        // 添加或更新参数
+        redirectUrl.searchParams.set('duration', durationSeconds.toFixed(2));
+        redirectUrl.searchParams.set('videoUrl', videoUrl);
+        redirectUrl.searchParams.set('durationFormatted', formatDuration(durationSeconds));
+        
+        // 使用fetch API发送请求
+        fetch(redirectUrl.toString(), {
+            method: 'GET',
+            headers: {
+                'Accept': '*/*',
+                // 注意：Sec-* 头部通常由浏览器自动设置，不能手动添加
+                // 'Sec-Fetch-Site': 'same-site',
+                // 'Sec-Fetch-Mode': 'no-cors',
+                // 'Sec-Fetch-Dest': 'video'
+            },
+            mode: 'no-cors' // 这会影响Sec-Fetch-Mode
+        })
+        .then(response => {
+            // 由于是no-cors模式，响应可能不可读
+            console.log('请求已发送');
+            // 如果需要实际跳转，可以在这里添加
+            window.location.href = redirectUrl.toString();
+        })
+        .catch(error => {
+            console.error('请求失败:', error);
+            // 如果fetch失败，回退到普通跳转
+            window.location.href = redirectUrl.toString();
+        });
+    }
+    // 跳转并携带时长参数
+    function redirectWithDurationOld(durationSeconds) {
         // 创建跳转URL对象
         const redirectUrl = new URL(redirectBaseUrl);
         
