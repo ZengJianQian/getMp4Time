@@ -74,21 +74,31 @@
         try {
             updateStatus('正在获取视频数据...');
             
+            // 首先发送HEAD请求获取ETag
+            const headResponse = await fetch(url, {
+                method: 'HEAD',
+                headers: {
+                    'Referer': 'https://www.gzsg.org/',
+                    'Accept': '*/*'
+                }
+            });
+            
+            const etag = headResponse.headers.get('If-None-Match');
+            
+            // 然后发送GET请求，包含If-Range和ETag
             const response = await fetch(url, {
                 method: 'GET',
-                mode: 'no-cors', // 添加no-cors模式
                 headers: {
+                    'Referer': 'https://www.gzsg.org/',
                     'Accept': '*/*',
+                    'If-Range': etag || '',
                     'Sec-Fetch-Site': 'same-site',
                     'Sec-Fetch-Mode': 'no-cors',
                     'Sec-Fetch-Dest': 'video'
                 }
             });
             
-            if (!response.ok && response.type !== 'opaque') {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
+                       
             const blob = await response.blob();
             const blobUrl = URL.createObjectURL(blob);
             
