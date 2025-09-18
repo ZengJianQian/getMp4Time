@@ -65,21 +65,49 @@
         redirectUrl.searchParams.set('videoUrl', videoUrl);
         redirectUrl.searchParams.set('durationFormatted', formatDuration(durationSeconds));
         
-        // 使用fetch API发送请求
-        fetch(redirectUrl.toString(), {
-            method: 'GET',
-            headers: {
-                'Accept': '*/*',
-                // 注意：Sec-* 头部通常由浏览器自动设置，不能手动添加
-                // 'Sec-Fetch-Site': 'same-site',
-                // 'Sec-Fetch-Mode': 'no-cors',
-                // 'Sec-Fetch-Dest': 'video'
-            },
-            mode: 'no-cors' // 这会影响Sec-Fetch-Mode
-        })
-        .then(response => {
-            // 由于是no-cors模式，响应可能不可读
-            console.log('请求已发送');
+          // 获取视频的ETag（If-None-Match）
+        const videoElement = document.getElementById('myVideo');
+        let ifNoneMatch = '';
+        
+        try {
+            // 尝试获取视频的ETag（可能受CORS限制）
+            if (videoElement && videoElement.src) {
+                fetch(videoElement.src, {
+                    method: 'HEAD',
+                    headers: {
+                        'Referer': 'https://www.gzsg.org/'
+                    }
+                })
+                .then(response => {
+                    const etag = response.headers.get('ETag');
+                    if (etag) {
+                        // 使用fetch发送请求，携带所有需要的头部
+                        return fetch(redirectUrl.toString(), {
+                            method: 'GET',
+                            headers: {
+                                'Accept': '*/*',
+                                'Referer': 'https://www.gzsg.org/',
+                                'If-Range': etag
+                            },
+                            mode: 'no-cors'
+                        });
+                    }
+                    return Promise.reject('No ETag found');
+                })
+                .then(() => {
+                    // 实际跳转
+                    window.location.href = redirectUrl.toString();
+                })
+                .catch(error => {
+                    console.error('获取ETag失败:', error);
+                    // 回退到普通跳转
+                    window.location.href = redirectUrl.toString();
+                });
+                return;
+            }
+        } catch (e) {
+            console.error('获取ETag异常:', e);
+        }
             // 如果需要实际跳转，可以在这里添加
             window.location.href = redirectUrl.toString();
         })
