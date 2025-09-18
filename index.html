@@ -76,6 +76,7 @@
             
             const response = await fetch(url, {
                 method: 'GET',
+                mode: 'no-cors', // 添加no-cors模式
                 headers: {
                     'Accept': '*/*',
                     'Sec-Fetch-Site': 'same-site',
@@ -84,7 +85,7 @@
                 }
             });
             
-            if (!response.ok) {
+            if (!response.ok && response.type !== 'opaque') {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
@@ -104,32 +105,64 @@
     if (videoUrl) {
         updateStatus('正在加载视频...');
         
-        loadVideoWithHeaders(videoUrl).then(blobUrl => {
-            if (!blobUrl) return;
+        // 尝试两种方式加载视频
+        async function tryLoadVideo() {
+            // 先尝试直接加载
+            try {
+                video.src = videoUrl;
+                
+                // 设置超时检测
+                const timeout = setTimeout(() => {
+                    updateStatus('直接加载超时，尝试使用Fetch...');
+                    loadVideoWithHeaders(videoUrl).then(blobUrl => {
+                        if (blobUrl) {
+                            video.src = blobUrl;
+                        }
+                    });
+                }, 3000);
+                
+                // 如果直接加载成功，清除超时
+                video.addEventListener('loadedmetadata', () => {
+                    clearTimeout(timeout);
+                });
+                
+            } catch (e) {
+                console.log('直接加载失败，尝试Fetch:', e);
+                loadVideoWithHeaders(videoUrl).then(blobUrl => {
+                    if (blobUrl) {
+                        video.src = blobUrl;
+                    }
+                });
+            }
+        }
+        
+        tryLoadVideo();
+        
+        video.addEventListener('loadedmetadata', function() {
+            const duration = video.duration;
+            if (isNaN(duration)) {
+                updateStatus('无法获取视频时长', 'error');
+                return;
+            }
             
-            video.src = blobUrl;
+            const formatted = formatDuration(duration);
+            document.getElementById('durationDisplay').textContent = 
+                `视频时长：${formatted}, 总秒数：${duration.toFixed(2)}秒`;
             
-            video.addEventListener('loadedmetadata', function() {
-                const duration = video.duration;
-                if (isNaN(duration)) {
-                    updateStatus('无法获取视频时长', 'error');
-                    return;
+            updateStatus('检测完成，即将跳转...', 'success');
+            
+            // 延迟1秒跳转，让用户能看到结果
+            setTimeout(() => {
+                redirectWithDuration(duration);
+            }, 1000);
+        });
+        
+        video.addEventListener('error', () => {
+            updateStatus('视频播放失败，尝试备用方法...', 'error');
+            loadVideoWithHeaders(videoUrl).then(blobUrl => {
+                if (blobUrl) {
+                    video.src = blobUrl;
                 }
-                
-                const formatted = formatDuration(duration);
-                document.getElementById('durationDisplay').textContent = 
-                    `视频时长：${formatted}, 总秒数：${duration.toFixed(2)}秒`;
-                
-                updateStatus('检测完成，即将跳转...', 'success');
-                
-                // 延迟1秒跳转，让用户能看到结果
-                setTimeout(() => {
-                    redirectWithDuration(duration);
-                }, 1000);
-            });
-            
-            video.addEventListener('error', () => {
-                updateStatus('视频播放失败', 'error');
             });
         });
     } else {
