@@ -19,7 +19,7 @@
 
 <script>
     // 默认备选地址
-    const DEFAULT_REDIRECT_URL = 'https://open.feishu.cn/anycross/trigger/callback/MDlmYTEyZDY1YWQyN2RkZjE4NmM4ZDE1ZjEyMWRiYjcx';
+    const DEFAULT_REDIRECT_URL = 'https://open.feishu.cn/anycross/trigger/callback/MDlmYTEyZDY1YWQyN2RkZjE4NmM0ZDE1ZjEyMWRiYjcx';
     
     // 从URL参数获取视频地址
     const urlParams = new URLSearchParams(window.location.search);
@@ -79,19 +79,13 @@
             xhr.open('GET', url, true);
             xhr.responseType = 'blob';
             
-            // 设置所有必要的请求头
-            xhr.setRequestHeader('Accept', '*/*');
-            xhr.setRequestHeader('Sec-Fetch-Site', 'same-site');
-            xhr.setRequestHeader('Sec-Fetch-Mode', 'no-cors');
-            xhr.setRequestHeader('Sec-Fetch-Dest', 'video');
+            // 设置必要的请求头
+            xhr.setRequestHeader('Origin', 'https://www.gzsg.org');
             xhr.setRequestHeader('Referer', 'https://www.gzsg.org/');
-            xhr.setRequestHeader('Accept-Encoding', 'identity;q=1, *;q=0');
-            xhr.setRequestHeader('Range', 'bytes=20873216-119209042');
-            xhr.setRequestHeader('If-Range', '"38dd38ee3a7f71965fd1c1b0412ed3bb"');
             
             const blobPromise = new Promise((resolve, reject) => {
                 xhr.onload = function() {
-                    if (xhr.status === 200 || xhr.status === 206) {
+                    if (xhr.status === 200) {
                         resolve(xhr.response);
                     } else {
                         reject(new Error(`HTTP error! status: ${xhr.status}`));
